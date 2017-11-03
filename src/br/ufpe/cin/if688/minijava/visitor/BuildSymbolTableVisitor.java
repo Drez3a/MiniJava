@@ -32,6 +32,7 @@ import br.ufpe.cin.if688.minijava.ast.Program;
 import br.ufpe.cin.if688.minijava.ast.This;
 import br.ufpe.cin.if688.minijava.ast.Times;
 import br.ufpe.cin.if688.minijava.ast.True;
+import br.ufpe.cin.if688.minijava.ast.Type;
 import br.ufpe.cin.if688.minijava.ast.VarDecl;
 import br.ufpe.cin.if688.minijava.ast.While;
 import br.ufpe.cin.if688.minijava.symboltable.Class;
@@ -66,6 +67,17 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Identifier i1,i2;
 	// Statement s;
 	public Void visit(MainClass n) {
+		String id1 = n.i1.toString();
+		String id2 = n.i2.toString();
+		Type t = new IntegerType();
+		
+		this.symbolTable.addClass(id1, null);
+		this.currClass = this.symbolTable.getClass(id1);
+		
+		this.currClass.addMethod("main", null);
+		this.currMethod = this.currClass.getMethod("main");
+		this.currMethod.addParam(id2, t);
+				
 		n.i1.accept(this);
 		n.i2.accept(this);
 		n.s.accept(this);
@@ -76,12 +88,19 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// VarDeclList vl;
 	// MethodDeclList ml;
 	public Void visit(ClassDeclSimple n) {
-		n.i.accept(this);
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.ml.size(); i++) {
-			n.ml.elementAt(i).accept(this);
+		String id = n.i.toString();
+		
+		if(this.symbolTable.addClass(id, null)) {
+			this.currClass = this.symbolTable.getClass(id);			
+			n.i.accept(this);
+			for (int i = 0; i < n.vl.size(); i++) {
+				n.vl.elementAt(i).accept(this);
+			}
+			for (int i = 0; i < n.ml.size(); i++) {
+				n.ml.elementAt(i).accept(this);
+			}
+		} else {
+			System.out.printf("The Class %s has already been defined.", id);
 		}
 		return null;
 	}
@@ -91,13 +110,20 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// VarDeclList vl;
 	// MethodDeclList ml;
 	public Void visit(ClassDeclExtends n) {
-		n.i.accept(this);
-		n.j.accept(this);
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.ml.size(); i++) {
-			n.ml.elementAt(i).accept(this);
+		String idI = n.i.toString();
+		
+		if(this.symbolTable.addClass(idI, n.j.toString())) {
+			this.currClass = this.symbolTable.getClass(idI);			
+			n.i.accept(this);
+			n.j.accept(this);
+			for (int i = 0; i < n.vl.size(); i++) {
+				n.vl.elementAt(i).accept(this);
+			}
+			for (int i = 0; i < n.ml.size(); i++) {
+				n.ml.elementAt(i).accept(this);
+			}
+		} else {
+			System.out.printf("The Class %s has already been defined.", idI);
 		}
 		return null;
 	}
@@ -105,6 +131,16 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Type t;
 	// Identifier i;
 	public Void visit(VarDecl n) {
+		String id = n.i.toString();
+		
+		if(this.currMethod != null) {
+			if(!this.currMethod.addVar(id, n.t)) {
+				System.out.printf("The Variable %s has already been defined in method %s.", id, this.currMethod.getId());
+			}
+		} else if(!this.currClass.addVar(id, n.t)) {
+			System.out.printf("The Variable %s has already been defined in class %s.", id, this.currClass.getId());
+		}
+		
 		n.t.accept(this);
 		n.i.accept(this);
 		return null;
@@ -117,24 +153,37 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// StatementList sl;
 	// Exp e;
 	public Void visit(MethodDecl n) {
-		n.t.accept(this);
-		n.i.accept(this);
-		for (int i = 0; i < n.fl.size(); i++) {
-			n.fl.elementAt(i).accept(this);
+		String id = n.i.toString();
+		
+		if(this.currClass.addMethod(id, n.t)) {
+			this.currMethod = this.currClass.getMethod(id);
+			n.t.accept(this);
+			n.i.accept(this);
+			for (int i = 0; i < n.fl.size(); i++) {
+				n.fl.elementAt(i).accept(this);
+			}
+			for (int i = 0; i < n.vl.size(); i++) {
+				n.vl.elementAt(i).accept(this);
+			}
+			for (int i = 0; i < n.sl.size(); i++) {
+				n.sl.elementAt(i).accept(this);
+			}
+			n.e.accept(this);
+		} else {
+			System.out.printf("The Method %s has already been defined in class %s.", id, this.currClass.getId());
 		}
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.sl.size(); i++) {
-			n.sl.elementAt(i).accept(this);
-		}
-		n.e.accept(this);
 		return null;
 	}
 
 	// Type t;
 	// Identifier i;
 	public Void visit(Formal n) {
+		String id = n.i.toString();
+		
+		if(!this.currMethod.addParam(id,n.t)) {
+			System.out.printf("The Variable %s has already been defined in method %s.", id, this.currMethod.getId());
+		}
+		
 		n.t.accept(this);
 		n.i.accept(this);
 		return null;
