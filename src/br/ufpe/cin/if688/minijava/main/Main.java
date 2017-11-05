@@ -14,7 +14,9 @@ import br.ufpe.cin.if688.minijava.ast.Print;
 import br.ufpe.cin.if688.minijava.ast.Program;
 import br.ufpe.cin.if688.minijava.ast.VarDecl;
 import br.ufpe.cin.if688.minijava.ast.VarDeclList;
+import br.ufpe.cin.if688.minijava.visitor.BuildSymbolTableVisitor;
 import br.ufpe.cin.if688.minijava.visitor.PrettyPrintVisitor;
+import br.ufpe.cin.if688.minijava.visitor.TypeCheckVisitor;
 
 public class Main {
 
@@ -26,10 +28,11 @@ public class Main {
 		);
 		
 		VarDeclList vdl1 = new VarDeclList();
-		vdl1.addElement(new VarDecl(
+/*		vdl1.addElement(new VarDecl(
 			new BooleanType(),
 			new Identifier("flag")
 		));
+*/
 		vdl1.addElement(new VarDecl(
 				new IntegerType(),
 				new Identifier("num")
@@ -37,14 +40,14 @@ public class Main {
 		
 		MethodDeclList mdl = new MethodDeclList();
 		
-		ClassDeclSimple A = new ClassDeclSimple(
-					new Identifier("A"), vdl1, mdl
-		);
+//		ClassDeclSimple A = new ClassDeclSimple(
+//					new Identifier("A"), vdl1, mdl
+//		);
 		
-		ClassDeclExtends B = new ClassDeclExtends(
-				new Identifier("B"), new Identifier("A"), 
-				new VarDeclList(), new MethodDeclList()
-		);
+//		ClassDeclExtends B = new ClassDeclExtends(
+//				new Identifier("B"), new Identifier("A"), 
+//				new VarDeclList(), new MethodDeclList()
+//		);
 		
 		VarDeclList vdl2 = new VarDeclList();
 		vdl2.addElement(new VarDecl(
@@ -56,14 +59,20 @@ public class Main {
 		);
 		
 		ClassDeclList cdl = new ClassDeclList();
-		cdl.addElement(A);
-		cdl.addElement(B);
+//		cdl.addElement(A);
+//		cdl.addElement(B);
 		cdl.addElement(C);
 
 		Program p = new Program(main, cdl);
 		
 		PrettyPrintVisitor ppv = new PrettyPrintVisitor();
 		ppv.visit(p);
+		
+		BuildSymbolTableVisitor build = new BuildSymbolTableVisitor();
+		build.visit(p);
+		
+		TypeCheckVisitor check = new TypeCheckVisitor(build.getSymbolTable());
+		check.visit(p);
 	}
 
 }

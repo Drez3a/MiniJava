@@ -48,7 +48,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
     private Class currFather;
     private SymbolTable symbolTable;
 
-	TypeCheckVisitor(SymbolTable st) {
+	public TypeCheckVisitor(SymbolTable st) {
 		symbolTable = st;
 		this.currClass = null;
 		this.currMethod = null;
@@ -442,11 +442,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		} else {			
 			identifier = this.symbolTable.getClass(n.toString()).type();
 		}
-		
-		if(identifier == null) {
-			System.out.printf("Cannot find symbol %s.", n.toString());
-		}
-		
+				
 		return identifier;
 	}
 	
